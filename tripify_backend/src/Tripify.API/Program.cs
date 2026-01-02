@@ -1,7 +1,14 @@
 using Tripify.Application;
 using Tripify.Infrastructure;
+using Tripify.API.Middleware;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+var logger = new LoggerConfiguration().ReadFrom.
+                Configuration(builder.Configuration).Enrich.FromLogContext().CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -33,6 +40,9 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+// Add Correlation ID middleware first
+app.UseMiddleware<CorrelationIdMiddleware>();
+
 // Enable Swagger for all environments (not just Development)
 app.UseSwagger();
 app.UseSwaggerUI(options =>
